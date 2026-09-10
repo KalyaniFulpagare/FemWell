@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+.env
+*.db
+node_modules/
+dist/
+.vite/
+.DS_Store
+
+# Local ML data and training artifacts
+ml/data/raw/
+ml/src/catboost_info/
+ml/plots/
