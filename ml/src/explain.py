@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 from typing import Any
 
 import joblib
@@ -163,7 +163,6 @@ def explain_instance(record: dict, top_k: int = 5) -> dict[str, Any]:
     preprocessor, raw_model = load_artifacts()
 
     X = _prepare_record(record, preprocessor)
-
     X_t = preprocessor.transform(X)
 
     feature_names = (
@@ -179,20 +178,30 @@ def explain_instance(record: dict, top_k: int = 5) -> dict[str, Any]:
     if isinstance(shap_values, list):
         sv = shap_values[1][0]
         base_value = explainer.expected_value[1]
-
     elif shap_values.ndim == 3:
         sv = shap_values[0, :, 1]
         base_value = explainer.expected_value[1]
-
     else:
         sv = shap_values[0]
         base_value = explainer.expected_value
-
         if isinstance(base_value, (list, np.ndarray)):
             base_value = base_value[-1]
 
+    # Only explain features actually provided by the user.
+    provided_features = {
+        feature for feature, value in record.items()
+        if value is not None and value != ""
+    }
+
+    filtered_contributions = []
+
+    for feature, value in zip(feature_names, sv):
+        raw_feature = feature.split("__")[-1]
+        if raw_feature in provided_features:
+            filtered_contributions.append((feature, value))
+
     contributions = sorted(
-        zip(feature_names, sv),
+        filtered_contributions,
         key=lambda item: item[1],
         reverse=True,
     )
@@ -221,6 +230,6 @@ def explain_instance(record: dict, top_k: int = 5) -> dict[str, Any]:
         "top_features_decreasing": decreasing,
         "all_contributions": {
             feature: round(float(value), 4)
-            for feature, value in zip(feature_names, sv)
+            for feature, value in filtered_contributions
         },
     }
