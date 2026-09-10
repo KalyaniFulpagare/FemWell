@@ -11,7 +11,7 @@ const featureInfo = {
     explanation: "Increased facial or body hair can be one of the patterns considered when screening for PCOS-related features. FemWell considers this alongside your other responses."
   },
   "weight gain": {
-    label: "Weight gain",
+    label: "Recent weight gain",
     key: "Weight gain(Y/N)",
     explanation: "Recent weight gain can occur alongside several hormonal or metabolic patterns. FemWell considers it as one input among many."
   },
@@ -21,7 +21,7 @@ const featureInfo = {
     explanation: "Certain types of skin darkening can occur alongside metabolic or hormonal changes. FemWell considers this pattern together with other information."
   },
   "pimples": {
-    label: "Pimples",
+    label: "Acne / pimples",
     key: "Pimples(Y/N)",
     explanation: "Acne or increased pimples can occur with hormonal changes, but they are also common for many other reasons. FemWell treats this as one contributing pattern."
   },
@@ -29,6 +29,26 @@ const featureInfo = {
     label: "Weight",
     key: "Weight (Kg)",
     explanation: "Body weight is one of the measurements included in the model. Its contribution is interpreted alongside height, BMI, cycle information and symptoms."
+  },
+  "height": {
+    label: "Height",
+    key: "Height(Cm)",
+    explanation: "Height is one of the measurements included in the model and is considered alongside weight and BMI."
+  },
+  "bmi": {
+    label: "BMI",
+    key: "BMI",
+    explanation: "BMI is one of the measurements considered by the model. It is interpreted alongside your other responses rather than as a standalone indicator."
+  },
+  "systolic": {
+    label: "Systolic blood pressure",
+    key: "BP _Systolic (mmHg)",
+    explanation: "Systolic blood pressure is one of the health measurements included in the model. FemWell considers it alongside the other information provided."
+  },
+  "diastolic": {
+    label: "Diastolic blood pressure",
+    key: "BP _Diastolic (mmHg)",
+    explanation: "Diastolic blood pressure is one of the health measurements included in the model. FemWell considers it alongside the other information provided."
   },
   "follicle no. (r)": {
     label: "Right ovary follicle count",
@@ -51,24 +71,24 @@ const featureInfo = {
     explanation: "LH is one of the hormone measurements included in the model. FemWell considers it together with other measurements rather than as a standalone indicator."
   },
   "cycle length(days)": {
-    label: "Cycle length",
+    label: "Menstrual cycle length",
     key: "Cycle length(days)",
     explanation: "Cycle length is one of the menstrual-cycle measurements considered by the model. FemWell interprets it together with the other information provided."
   },
   "fast food": {
-    label: "Fast food",
+    label: "Fast-food intake",
     key: "Fast food (Y/N)",
     explanation: "Diet-related information is one of the lifestyle patterns included in the model. A single dietary response does not determine PCOS risk or cause."
   },
   "cycle(r/i)": {
-    label: "Cycle pattern",
+    label: "Menstrual cycle pattern",
     key: "Cycle(R/I)",
     explanation: "Menstrual cycle regularity is an important piece of information in many PCOS-related assessments. FemWell considers it together with your other responses."
   }
 };
 
 function normalizeFeature(feature) {
-  return feature
+  const cleaned = feature
     .replace(/^bin__/, "")
     .replace(/^num__/, "")
     .replace(/^cat__/, "")
@@ -76,6 +96,13 @@ function normalizeFeature(feature) {
     .replace(/\s*\(Y\/N\)\s*/gi, "")
     .trim()
     .toLowerCase();
+
+  if (cleaned.includes("bp _systolic")) return "systolic";
+  if (cleaned.includes("bp _diastolic")) return "diastolic";
+  if (cleaned.includes("height")) return "height";
+  if (cleaned === "weight (kg)") return "weight";
+
+  return cleaned;
 }
 
 function getFeatureInfo(feature) {
@@ -100,7 +127,11 @@ function getFeatureInfo(feature) {
 function getResponse(inputs, feature) {
   const info = getFeatureInfo(feature);
 
-  if (info.key && inputs?.[info.key] !== undefined && inputs?.[info.key] !== null) {
+  if (
+    info.key &&
+    inputs?.[info.key] !== undefined &&
+    inputs?.[info.key] !== null
+  ) {
     return inputs[info.key];
   }
 
@@ -149,7 +180,10 @@ export default function Results() {
         <div className="result-shell">
           <h1>Something went wrong.</h1>
           <p>{error}</p>
-          <button className="primary-btn" onClick={() => navigate("/screening")}>
+          <button
+            className="primary-btn"
+            onClick={() => navigate("/screening")}
+          >
             Back to screening
           </button>
         </div>
@@ -247,7 +281,9 @@ export default function Results() {
 
                         <span>{info.label}</span>
 
-                        <span className={`insight-direction ${item.direction}`}>
+                        <span
+                          className={`insight-direction ${item.direction}`}
+                        >
                           {item.direction === "up" ? "Higher" : "Lower"}
                         </span>
 
@@ -333,5 +369,3 @@ export default function Results() {
     </div>
   );
 }
-
-
